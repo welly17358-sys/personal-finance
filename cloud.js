@@ -16,6 +16,7 @@
     cfg=data.settings;normalize();buildInputs();render();setStatus('已同步雲端 · '+new Date(data.updated_at).toLocaleString('zh-TW'));
   }else{cfg=structuredClone(BASE);normalize();buildInputs();render();setStatus('新帳號尚無私人資料。請匯入隨附的私人參數 JSON，再按「儲存到私人雲端」。')}
   loading=false;
+  window.FINANCE_UPDATE_MARKET_STATUS?.();
  }
  async function cloudSave(){if(!user||loading||saving)return;saving=true;setStatus('正在儲存私人雲端…');
   const {error}=await client.from('user_settings').upsert({user_id:user.id,settings:cfg,updated_at:new Date().toISOString()},{onConflict:'user_id'});
@@ -37,13 +38,25 @@
  }
  client.auth.onAuthStateChange((_event,session)=>{setTimeout(()=>void authChanged(session),0)});
  void client.auth.getSession().then(({data})=>authChanged(data.session));
- // Market data is public; it is NEVER treated as user-specific executed transactions.
+ // Public quotes are loaded separately from private Supabase data.
+ // No market quote is ever persisted to cfg or user_settings.
  void fetch('./data/market.json',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(d=>{
-   const el=document.getElementById('marketStatus');if(!d){el.textContent='市場資料：尚未提供；目前使用手動輸入市值';return}
-   const quotes=d.quotes||{};const parts=Object.keys(quotes).map(code=>`${code}：${quotes[code].close}元`).join(' · ');
-   el.textContent=`最新可取得收盤行情（資料擷取：${d.fetched_at||'未知'}；請核對交易日）｜${parts||'尚無資料'}`;
-   // Do not overwrite original holdings or forecast assumptions automatically; daily mark-to-market is displayed separately.
-   const holdings=cfg.etfs||[];const valuation=holdings.reduce((sum,e)=>sum+(quotes[e.code]?Number(e.shares)*Number(quotes[e.code].close):Number(e.value||0)),0);
-   const extra=document.createElement('span');extra.textContent=` ｜ 依目前登錄股數估算ETF市值：NT$${Math.round(valuation).toLocaleString('zh-TW')}`;el.append(extra);
- }).catch(()=>{document.getElementById('marketStatus').textContent='行情更新暫時不可用；保留手動資料'});
+   const el=document.getElementById('marketStatus');
+   if(!d||!d.quotes){el.textContent='市場資料：尚未提供；使用私人設定中的手動市值';return}
+   const valid={};
+   for(const [code,q] of Object.entries(d.quotes)){
+     const close=Number(q?.close);
+     if(Number.isFinite(close)&&close>0)valid[code]={close};
+   }
+   window.FINANCE_MARKET_QUOTES=valid;
+   const parts=Object.entries(valid).map(([code,q])=>`${code}：${q.close}元`).join(' · ');
+   function updateMarketStatus(){
+     const holdings=cfg.etfs||[];
+     const valuation=holdings.reduce((sum,e)=>sum+(valid[e.code]?Number(e.shares)*valid[e.code].close:Number(e.value||0)),0);
+     el.textContent=`行情擷取：${d.fetched_at||'未知'}（非交易日證明，請核對收盤日期）｜${parts||'尚無資料'} ｜ 依持股估算ETF現值：NT$${Math.round(valuation).toLocaleString('zh-TW')}｜已套用至資產預測（不覆寫雲端持倉）`;
+   }
+   window.FINANCE_UPDATE_MARKET_STATUS=updateMarketStatus;
+   updateMarketStatus();
+   if(user&&!loading)render();
+ }).catch(()=>{document.getElementById('marketStatus').textContent='行情更新暫時不可用；使用私人設定中的手動市值'});
 })();
