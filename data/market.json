@@ -1,1 +1,38 @@
-{"fetched_at":null,"quotes":{}}
+{
+  "fetched_at": "2026-11-19T10:34:49.680070+08:00",
+  "source": "https://openapi.twse.com.tw/v1/exchangeReport/STOCK_DAY_ALL",
+  "quotes": {
+    "0050": {
+      "close": 94.1,
+      "name": "元大台灣50"
+    },
+    "0052": {
+      "close": 54.4,
+      "name": "富邦科技"
+    },
+    "0056": {
+      "close": 49.48,
+      "name": "元大高股息"
+    },
+    "00830": {
+      "close": 71.7,
+      "name": "國泰費城半導體"
+    },
+    "00881": {
+      "close": 41.04,
+      "name": "國泰台灣科技龍頭"
+    },
+    "00919": {
+      "close": 29.99,
+      "name": "群益台灣精選高息"
+    },
+    "00923": {
+      "close": 33.75,
+      "name": "群益台ESG低碳50"
+    },
+    "00929": {
+      "close": 23.6,
+      "name": "復華台灣科技優息"
+    }
+  }
+}
