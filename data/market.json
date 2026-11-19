@@ -1,5 +1,5 @@
 {
-  "fetched_at": "2026-11-19T17:27:58.573821+08:00",
+  "fetched_at": "2026-11-19T17:42:08.866786+08:00",
   "source": "https://openapi.twse.com.tw/v1/exchangeReport/STOCK_DAY_ALL",
   "quotes": {
     "0050": {
